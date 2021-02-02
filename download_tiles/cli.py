@@ -29,7 +29,7 @@ def parse_zoom_levels(ctx, param, value):
 
 def parse_bbox(ctx, param, value):
     float_re = r"(\-?(?:\d+)(?:\.\d+)?)"
-    r = re.compile(r"^(),(),(),()$".replace("()", float_re))
+    r = re.compile(r"^()\s*,\s*()\s*,\s*()\s*,\s*()$".replace("()", float_re))
     match = r.match(value)
     if match is None:
         raise click.BadParameter("bbox should be min-lon,min-lat,max-lon,max-lat")
@@ -130,7 +130,7 @@ def cli(
     if verbose:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     kwargs = dict(
-        tile_url=tiles_url,
+        tiles_url=tiles_url,
         tiles_headers={"User-Agent": user_agent},
         tiles_subdomains=tiles_subdomains,
         filepath=str(mbtiles),
