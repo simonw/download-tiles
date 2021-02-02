@@ -2,7 +2,9 @@ import click
 import landez
 import logging
 import re
+import requests
 import sys
+import urllib
 
 
 def parse_zoom_levels(ctx, param, value):
@@ -46,7 +48,9 @@ def validate_tiles_url(ctx, param, value):
 
 
 @click.command()
-@click.argument("mbtiles", type=click.Path(dir_okay=False, file_okay=True))
+@click.argument(
+    "mbtiles", type=click.Path(dir_okay=False, file_okay=True), required=False
+)
 @click.option(
     "-z",
     "--zoom-levels",
@@ -74,6 +78,19 @@ def validate_tiles_url(ctx, param, value):
     callback=lambda ctx, param, value: [v.strip() for v in value.split(",")],
 )
 @click.option(
+    "--country",
+    help="Country to find bounding box for",
+)
+@click.option(
+    "--city",
+    help="City to find bounding box for",
+)
+@click.option(
+    "--show-bbox",
+    is_flag=True,
+    help="Show country or city bounding box without downloading tiles",
+)
+@click.option(
     "--user-agent",
     default="github.com/simonw/download-tiles",
     help="User-Agent header to send with tile requests",
@@ -87,6 +104,9 @@ def cli(
     bbox,
     tiles_url,
     tiles_subdomains,
+    country,
+    city,
+    show_bbox,
     user_agent,
     verbose,
     cache_dir,
@@ -97,6 +117,16 @@ def cli(
     Please use this tool responsibly, and respect the OpenStreetMap tile usage policy:
     https://operations.osmfoundation.org/policies/tiles/
     """
+    # mbtiles is required unless show_bbox is used
+    if not mbtiles and not show_bbox:
+        raise click.BadParameter("mbtiles argument is required")
+    if country:
+        bbox = lookup_bbox("country", country)
+    elif city:
+        bbox = lookup_bbox("city", city)
+    if show_bbox:
+        click.echo(",".join(map(str, bbox)))
+        return
     if verbose:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     kwargs = dict(
@@ -113,3 +143,17 @@ def cli(
         bbox=bbox, zoomlevels=list(range(zoom_levels[0], zoom_levels[1] + 1))
     )
     mb.run()
+
+
+def lookup_bbox(parameter, value):
+    url = "https://nominatim.openstreetmap.org/?{}={}&format=json&limit=1".format(
+        parameter, urllib.parse.quote_plus(value)
+    )
+    results = requests.get(url).json()
+    boundingbox = results[0]["boundingbox"]
+    lat1, lat2, lon1, lon2 = map(float, boundingbox)
+    min_lat = min(lat1, lat2)
+    max_lat = max(lat1, lat2)
+    min_lon = min(lon1, lon2)
+    max_lon = max(lon1, lon2)
+    return min_lon, min_lat, max_lon, max_lat

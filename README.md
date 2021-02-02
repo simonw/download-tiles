@@ -33,6 +33,14 @@ The different zoom levels to download. Specify a single number, e.g. `15`, or a 
 
 The bounding box to fetch. Should be specified as `min-lon,min-lat,max-lon,max-lat`. You can use [bboxfinder.com](http://bboxfinder.com/) to find these for different areas.
 
+`--city` or `--country`
+
+These options can be used instead of `--bbox`. The city or country specified will be looked up using the [Nominatum API](https://nominatim.org/release-docs/latest/api/Search/) and used to derive a bounding box.
+
+`--show-bbox`
+
+Use these to output the bounding box that was retrieved for the `--city` or `--country` without retrieving any tiles.
+
 `--tiles-url`
 
 The tile server URL to use. This should include `{z}` and `{x}` and `{y}` specifiers, and can optionally include `{s}` for subdomains.
