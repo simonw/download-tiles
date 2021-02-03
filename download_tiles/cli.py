@@ -161,6 +161,8 @@ def cli(
     mb.run()
 
     if attribution:
+        if attribution == "osm":
+            attribution = DEFAULT_ATTRIBUTION
         db = sqlite3.connect(str(mbtiles))
         with db:
             db.execute(

@@ -45,6 +45,8 @@ Use these to output the bounding box that was retrieved for the `--city` or `--c
 
 Attribution string to bake into the `metadata` table. This will default to `© OpenStreetMap contributors` unless you use `--tiles-url` to specify an alternative tile server, in which case you should specify a custom attribution string.
 
+You can use the `--attribution=osm` shortcut to specify the `© OpenStreetMap contributors` value without having to type it out in full.
+
 `--tiles-url`
 
 The tile server URL to use. This should include `{z}` and `{x}` and `{y}` specifiers, and can optionally include `{s}` for subdomains.

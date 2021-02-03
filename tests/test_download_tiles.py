@@ -47,6 +47,10 @@ def test_single_zoom_level(mock_tiles):
         ("-z 0 --attribution=foo", "foo"),
         ("-z 0 --tiles-url=http://example/{z}/{x}/{y}", None),
         ("-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=bar", "bar"),
+        (
+            "-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=osm",
+            "© OpenStreetMap contributors",
+        ),
     ],
 )
 def test_attribution(mock_tiles, args, expected_attribution):
