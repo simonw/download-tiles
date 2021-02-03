@@ -5,10 +5,14 @@ import sqlite3
 
 
 @pytest.fixture()
-def mock_tile(requests_mock):
+def mock_tiles(requests_mock):
     requests_mock.get(
         "http://a.tile.openstreetmap.org/0/0/0.png",
         content=b"PNG tile",
+    )
+    requests_mock.get(
+        "http://example/0/0/0",
+        content=b"PNG tile 2",
     )
 
 
@@ -20,7 +24,7 @@ def test_version():
         assert result.output.startswith("cli, version ")
 
 
-def test_single_zoom_level(mock_tile):
+def test_single_zoom_level(mock_tiles):
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(cli, ["tiles.db", "-z", "0"])
@@ -34,6 +38,25 @@ def test_single_zoom_level(mock_tile):
             "select zoom_level, tile_column, tile_row, tile_data from tiles"
         ).fetchall()
         assert rows == [(0, 0, 0, b"PNG tile")]
+
+
+@pytest.mark.parametrize(
+    "args,expected_attribution",
+    [
+        ("-z 0", "© OpenStreetMap contributors"),
+        ("-z 0 --attribution=foo", "foo"),
+        ("-z 0 --tiles-url=http://example/{z}/{x}/{y}", None),
+        ("-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=bar", "bar"),
+    ],
+)
+def test_attribution(mock_tiles, args, expected_attribution):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, "tiles.db " + args)
+        assert result.exit_code == 0, result.output
+        db = sqlite3.connect("tiles.db")
+        metadata = dict(db.execute("select name, value from metadata").fetchall())
+        assert metadata.get("attribution") == expected_attribution
 
 
 @pytest.mark.parametrize(

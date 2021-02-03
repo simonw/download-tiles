@@ -1,13 +1,16 @@
+from attr import attrib
 import click
 import landez
 import logging
 import re
 import requests
+import sqlite3
 import sys
 import urllib
 
 
 DEFAULT_TILES_URL = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+DEFAULT_ATTRIBUTION = "© OpenStreetMap contributors"
 
 
 def parse_zoom_levels(ctx, param, value):
@@ -99,6 +102,10 @@ def validate_tiles_url(ctx, param, value):
     default="github.com/simonw/download-tiles",
     help="User-Agent header to send with tile requests",
 )
+@click.option(
+    "--attribution",
+    help="Attribution to write to the metadata table",
+)
 @click.option("--verbose", is_flag=True, help="Verbose mode - show detailed logs")
 @click.option("--cache-dir", help="Folder to cache tiles between runs")
 @click.version_option()
@@ -112,6 +119,7 @@ def cli(
     city,
     show_bbox,
     user_agent,
+    attribution,
     verbose,
     cache_dir,
 ):
@@ -131,6 +139,8 @@ def cli(
     if show_bbox:
         click.echo(",".join(map(str, bbox)))
         return
+    if not attribution and not tiles_url:
+        attribution = DEFAULT_ATTRIBUTION
     if verbose:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     kwargs = dict(
@@ -149,6 +159,14 @@ def cli(
         bbox=bbox, zoomlevels=list(range(zoom_levels[0], zoom_levels[1] + 1))
     )
     mb.run()
+
+    if attribution:
+        db = sqlite3.connect(str(mbtiles))
+        with db:
+            db.execute(
+                "insert into metadata (name, value) values (:name, :value)",
+                {"name": "attribution", "value": attribution},
+            )
 
 
 def lookup_bbox(parameter, value):

@@ -41,6 +41,10 @@ These options can be used instead of `--bbox`. The city or country specified wil
 
 Use these to output the bounding box that was retrieved for the `--city` or `--country` without retrieving any tiles.
 
+`--attribution`
+
+Attribution string to bake into the `metadata` table. This will default to `© OpenStreetMap contributors` unless you use `--tiles-url` to specify an alternative tile server, in which case you should specify a custom attribution string.
+
 `--tiles-url`
 
 The tile server URL to use. This should include `{z}` and `{x}` and `{y}` specifiers, and can optionally include `{s}` for subdomains.
