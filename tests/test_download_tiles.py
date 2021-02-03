@@ -1,6 +1,15 @@
 from click.testing import CliRunner
 from download_tiles.cli import cli
 import pytest
+import sqlite3
+
+
+@pytest.fixture()
+def mock_tile(requests_mock):
+    requests_mock.get(
+        "http://a.tile.openstreetmap.org/0/0/0.png",
+        content=b"PNG tile",
+    )
 
 
 def test_version():
@@ -9,6 +18,22 @@ def test_version():
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
         assert result.output.startswith("cli, version ")
+
+
+def test_single_zoom_level(mock_tile):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, ["tiles.db", "-z", "0"])
+        assert result.exit_code == 0
+        db = sqlite3.connect("tiles.db")
+        database_objects = set(
+            db.execute("select name, type from sqlite_master").fetchall()
+        )
+        assert database_objects.issuperset({("metadata", "table"), ("tiles", "table")})
+        rows = db.execute(
+            "select zoom_level, tile_column, tile_row, tile_data from tiles"
+        ).fetchall()
+        assert rows == [(0, 0, 0, b"PNG tile")]
 
 
 @pytest.mark.parametrize(

@@ -7,6 +7,9 @@ import sys
 import urllib
 
 
+DEFAULT_TILES_URL = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+
 def parse_zoom_levels(ctx, param, value):
     r = re.compile(r"^(\d+)(?:\-(\d+))?$")
     match = r.match(value)
@@ -38,6 +41,8 @@ def parse_bbox(ctx, param, value):
 
 
 def validate_tiles_url(ctx, param, value):
+    if not value:
+        return value
     fragments = "{z}", "{x}", "{y}"
     for fragment in fragments:
         if fragment not in value:
@@ -68,7 +73,6 @@ def validate_tiles_url(ctx, param, value):
 @click.option(
     "--tiles-url",
     help="Tile URL server to use. Defaults to OpenStreetMap.",
-    default="http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     callback=validate_tiles_url,
 )
 @click.option(
@@ -130,7 +134,7 @@ def cli(
     if verbose:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     kwargs = dict(
-        tiles_url=tiles_url,
+        tiles_url=tiles_url or DEFAULT_TILES_URL,
         tiles_headers={"User-Agent": user_agent},
         tiles_subdomains=tiles_subdomains,
         filepath=str(mbtiles),
@@ -138,6 +142,8 @@ def cli(
     if cache_dir:
         kwargs["cache"] = True
         kwargs["tiles_dir"] = cache_dir
+    else:
+        kwargs["cache"] = False
     mb = landez.MBTilesBuilder(**kwargs)
     mb.add_coverage(
         bbox=bbox, zoomlevels=list(range(zoom_levels[0], zoom_levels[1] + 1))
