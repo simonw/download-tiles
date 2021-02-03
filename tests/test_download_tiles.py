@@ -41,19 +41,25 @@ def test_single_zoom_level(mock_tiles):
 
 
 @pytest.mark.parametrize(
-    "args,expected_attribution",
+    "args,expected_attribution,expected_name",
     [
-        ("-z 0", "© OpenStreetMap contributors"),
-        ("-z 0 --attribution=foo", "foo"),
-        ("-z 0 --tiles-url=http://example/{z}/{x}/{y}", None),
-        ("-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=bar", "bar"),
+        ("-z 0", "© OpenStreetMap contributors", None),
+        ("-z 0 --attribution=foo --name=Blah", "foo", "Blah"),
+        ("-z 0 --tiles-url=http://example/{z}/{x}/{y}", None, None),
+        ("-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=bar", "bar", None),
         (
             "-z 0 --tiles-url=http://example/{z}/{x}/{y} --attribution=osm",
             "© OpenStreetMap contributors",
+            None,
         ),
     ],
 )
-def test_attribution(mock_tiles, args, expected_attribution):
+def test_attribution(
+    mock_tiles,
+    args,
+    expected_attribution,
+    expected_name,
+):
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(cli, "tiles.db " + args)
@@ -61,6 +67,8 @@ def test_attribution(mock_tiles, args, expected_attribution):
         db = sqlite3.connect("tiles.db")
         metadata = dict(db.execute("select name, value from metadata").fetchall())
         assert metadata.get("attribution") == expected_attribution
+        if expected_name:
+            assert metadata.get("name") == expected_name
 
 
 @pytest.mark.parametrize(
@@ -83,28 +91,33 @@ def test_various_error_messages(args, expected_error):
 
 
 @pytest.mark.parametrize(
-    "args,url_args,boundingbox,expected_bbox",
+    "args,url_args,display_name,boundingbox,expected_bbox",
     [
         (
             "--country madagascar",
             "country=madagascar",
+            "Madagascar",
             ["-25.784021", "-11.732889", "42.9680076", "50.6727307"],
             "42.9680076,-25.784021,50.6727307,-11.732889",
         ),
         (
             "--city london",
             "city=london",
+            "London, Greater London, England, United Kingdom",
             ["51.2867601", "51.6918741", "-0.5103751", "0.3340155"],
             "-0.5103751,51.2867601,0.3340155,51.6918741",
         ),
     ],
 )
-def test_city_and_country(requests_mock, args, url_args, boundingbox, expected_bbox):
+def test_city_and_country(
+    mock_tiles, requests_mock, args, url_args, display_name, boundingbox, expected_bbox
+):
     requests_mock.get(
         "https://nominatim.openstreetmap.org/?{}&format=json&limit=1".format(url_args),
         json=[
             {
                 "boundingbox": boundingbox,
+                "display_name": display_name,
             }
         ],
     )
@@ -113,3 +126,10 @@ def test_city_and_country(requests_mock, args, url_args, boundingbox, expected_b
         result = runner.invoke(cli, args + " --show-bbox")
         assert result.exit_code == 0
         assert result.output.strip() == expected_bbox
+        # Now try downloading the tiles
+        result2 = runner.invoke(cli, "tiles.db " + args + " -z 0")
+        assert result2.exit_code == 0
+        db = sqlite3.connect("tiles.db")
+        metadata = dict(db.execute("select name, value from metadata").fetchall())
+        assert metadata["bounds"] == expected_bbox
+        assert metadata["name"] == display_name

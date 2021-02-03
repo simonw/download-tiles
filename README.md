@@ -41,6 +41,10 @@ These options can be used instead of `--bbox`. The city or country specified wil
 
 Use these to output the bounding box that was retrieved for the `--city` or `--country` without retrieving any tiles.
 
+`--name`
+
+A name for this tile collection, used for the `name` field in the `metadata` table. If not specified a UUID will be used, or if you used `--city` or `--country` the name will be set to the full name of that place.
+
 `--attribution`
 
 Attribution string to bake into the `metadata` table. This will default to `© OpenStreetMap contributors` unless you use `--tiles-url` to specify an alternative tile server, in which case you should specify a custom attribution string.

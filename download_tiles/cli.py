@@ -106,6 +106,10 @@ def validate_tiles_url(ctx, param, value):
     "--attribution",
     help="Attribution to write to the metadata table",
 )
+@click.option(
+    "--name",
+    help="Name to write to the metadata table",
+)
 @click.option("--verbose", is_flag=True, help="Verbose mode - show detailed logs")
 @click.option("--cache-dir", help="Folder to cache tiles between runs")
 @click.version_option()
@@ -120,6 +124,7 @@ def cli(
     show_bbox,
     user_agent,
     attribution,
+    name,
     verbose,
     cache_dir,
 ):
@@ -132,10 +137,11 @@ def cli(
     # mbtiles is required unless show_bbox is used
     if not mbtiles and not show_bbox:
         raise click.BadParameter("mbtiles argument is required")
+    suggested_name = None
     if country:
-        bbox = lookup_bbox("country", country)
+        bbox, suggested_name = lookup_bbox("country", country)
     elif city:
-        bbox = lookup_bbox("city", city)
+        bbox, suggested_name = lookup_bbox("city", city)
     if show_bbox:
         click.echo(",".join(map(str, bbox)))
         return
@@ -160,15 +166,24 @@ def cli(
     )
     mb.run()
 
-    if attribution:
+    if name is None:
+        name = suggested_name
+
+    if attribution or name:
         if attribution == "osm":
             attribution = DEFAULT_ATTRIBUTION
         db = sqlite3.connect(str(mbtiles))
         with db:
-            db.execute(
-                "insert into metadata (name, value) values (:name, :value)",
-                {"name": "attribution", "value": attribution},
-            )
+            if attribution:
+                db.execute(
+                    "insert into metadata (name, value) values (:name, :value)",
+                    {"name": "attribution", "value": attribution},
+                )
+            if name:
+                db.execute(
+                    "update metadata set value = :value where name = :name",
+                    {"name": "name", "value": name},
+                )
 
 
 def lookup_bbox(parameter, value):
@@ -182,4 +197,4 @@ def lookup_bbox(parameter, value):
     max_lat = max(lat1, lat2)
     min_lon = min(lon1, lon2)
     max_lon = max(lon1, lon2)
-    return min_lon, min_lat, max_lon, max_lat
+    return (min_lon, min_lat, max_lon, max_lat), results[0]["display_name"]
