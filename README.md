@@ -25,39 +25,39 @@ Running the following will download zoom levels 0-3 of OpenStreetMap, 85 tiles t
 
 You can customize which tile and zoom levels are downloaded using command options:
 
-`--zoom-levels` or `-z`
+`--zoom-levels=0-3` or `-z=0-3`
 
 The different zoom levels to download. Specify a single number, e.g. `15`, or a range of numbers e.g. `0-4`. Be careful with this setting as you can easily go over the limits requested by the underlying tile server.
 
-`--bbox` or `-b`
+`--bbox=3.9,-6.3,14.5,10.2` or `-b=3.9,-6.3,14.5,10.2`
 
 The bounding box to fetch. Should be specified as `min-lon,min-lat,max-lon,max-lat`. You can use [bboxfinder.com](http://bboxfinder.com/) to find these for different areas.
 
-`--city` or `--country`
+`--city=london` or `--country=madagascar`
 
 These options can be used instead of `--bbox`. The city or country specified will be looked up using the [Nominatum API](https://nominatim.org/release-docs/latest/api/Search/) and used to derive a bounding box.
 
 `--show-bbox`
 
-Use these to output the bounding box that was retrieved for the `--city` or `--country` without retrieving any tiles.
+Use this option to output the bounding box that was retrieved for the `--city` or `--country` without downloading any tiles.
 
-`--name`
+`--name=Name`
 
 A name for this tile collection, used for the `name` field in the `metadata` table. If not specified a UUID will be used, or if you used `--city` or `--country` the name will be set to the full name of that place.
 
-`--attribution`
+`--attribution="Attribution string"`
 
 Attribution string to bake into the `metadata` table. This will default to `© OpenStreetMap contributors` unless you use `--tiles-url` to specify an alternative tile server, in which case you should specify a custom attribution string.
 
 You can use the `--attribution=osm` shortcut to specify the `© OpenStreetMap contributors` value without having to type it out in full.
 
-`--tiles-url`
+`--tiles-url=https://...`
 
 The tile server URL to use. This should include `{z}` and `{x}` and `{y}` specifiers, and can optionally include `{s}` for subdomains.
 
 The default URL used here is for OpenStreetMap, `http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
 
-`--tiles-subdomains`
+`--tiles-subdomains=a,b,c`
 
 A comma-separated list of subdomains to use for the `{s}` parameter.
 
@@ -65,7 +65,7 @@ A comma-separated list of subdomains to use for the `{s}` parameter.
 
 Use this option to turn on verbose logging.
 
-`--cache-dir`
+`--cache-dir=/tmp/tiles`
 
 Provide a directory to cache downloaded tiles between runs. This can be useful if you are worried you might not have used the correct options for the bounding box or zoom levels.
 
