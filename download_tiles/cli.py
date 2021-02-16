@@ -1,4 +1,3 @@
-from attr import attrib
 import click
 import landez
 import logging
