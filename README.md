@@ -75,6 +75,8 @@ Use this option to turn on verbose logging.
 ```
 Provide a directory to cache downloaded tiles between runs. This can be useful if you are worried you might not have used the correct options for the bounding box or zoom levels.
 
+Databases created with this tool will have their SQLite `application_id` set to `0x4d504258`, as described in the SQLite [magic.txt file](https://www.sqlite.org/src/artifact?ci=trunk&filename=magic.txt).
+
 ## Development
 
 To contribute to this tool, first checkout the code. Then create a new virtual environment:

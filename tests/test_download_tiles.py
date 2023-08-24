@@ -38,6 +38,8 @@ def test_single_zoom_level(mock_tiles):
             "select zoom_level, tile_column, tile_row, tile_data from tiles"
         ).fetchall()
         assert rows == [(0, 0, 0, b"PNG tile")]
+        # And check the application_id is set
+        assert db.execute("pragma application_id").fetchone()[0] == 0x4D504258
 
 
 @pytest.mark.parametrize(

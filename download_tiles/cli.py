@@ -7,7 +7,7 @@ import sqlite3
 import sys
 import urllib
 
-
+APPLICATION_ID = 0x4D504258
 DEFAULT_TILES_URL = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 DEFAULT_ATTRIBUTION = "© OpenStreetMap contributors"
 
@@ -164,6 +164,13 @@ def cli(
         bbox=bbox, zoomlevels=list(range(zoom_levels[0], zoom_levels[1] + 1))
     )
     mb.run()
+
+    # Set application_id
+    db = sqlite3.connect(str(mbtiles))
+    with db:
+        application_id = db.execute("pragma application_id").fetchone()[0]
+        if not application_id:
+            db.execute("pragma application_id = {}".format(APPLICATION_ID))
 
     if name is None:
         name = suggested_name
