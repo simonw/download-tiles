@@ -34,5 +34,5 @@ setup(
     install_requires=["click", "requests", "landez==2.5.0"],
     extras_require={"test": ["pytest", "requests-mock"]},
     tests_require=["download-tiles[test]"],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )
